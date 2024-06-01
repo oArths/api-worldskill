@@ -7,7 +7,9 @@ class database{
 
         $result = null;
 
-        $host = "localhost:3307";
+        // casa = localhost
+        // senai = localhost:3307
+        $host = "localhost";
         $user = "root";
         $pass = "";
         $db = "worldskill";
