@@ -25,6 +25,17 @@ $router->add('POST', $url . '/api/v1/auth/signup', function() use ($control) {
      echo json_encode($response);
     
     });
+$router->add('POST', $url . '/api/v1/signin', function() use ($control) {
+
+    $data = json_decode(file_get_contents('php://input'), true);
+
+     $response = $control->login_user($data);
+
+     header('Content-Type: application/json');
+     http_response_code(201);
+     echo json_encode($response);
+    
+    });
 
 
 $router->run();
