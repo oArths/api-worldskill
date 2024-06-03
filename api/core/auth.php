@@ -11,6 +11,10 @@ class Auth {
     public function create_token($params) {
         $db = new database;
         
+        if(!is_object($params)){
+            $params = $params[0];
+        }
+
         $user = $params['username'];    
         $name = $params['name'];
         
@@ -43,10 +47,14 @@ class Auth {
             ':username' => $params['username'],
         ];
         
+        $nowDate = date("Y-m-d H:i:s",time());
+
+        $results = $db->QUERY('SELECT * FROM  user WHERE username = :username', $consulta);
         
-        $results = $db->QUERY('SELECT id FROM  user WHERE username = :username', $consulta);
-        
-        $userId = $results[0]['id'];
+        if($results)
+        {
+            $userId = $results[0]['id'];
+        }
         
         $insert = [
             ':userId' => $userId,
@@ -59,51 +67,58 @@ class Auth {
         VALUES (:userId,:tokenString,:creationDate)", $insert);
         
         
-        return $token;
-       
+        return $token;       
     }
 
     public function exist_token($params){
         $db = new database;
 
+        
         $consulta = [
-            ':userId' => $params['id']
+            ':userId' => $params[0]['id']
         ];
+        
         $exits = $db->QUERY('SELECT id FROM accesstoken WHERE userId = :userId', $consulta);
-
+        
         if(empty($exits)){
+            header('Content-Type: application/json');
+            http_response_code(201);
             $token = $this->create_token($params);
             return $token;
-        }elseif($this->is_valid($params)){
-            return true;
+        }else{
+           return $this->is_valid($params);
         }
-
-
+        
+        
     }
     public function is_valid ($params) {
         $db = new database;
+        
 
         $consulta = [
-            ':userId' => $params['id']
+            ':userId' => $params[0]['id']
         ];
-
-        $token = $db->QUERY("SELECT creationDate FROM accesstoken WHERE  userId = :userId", $consulta); 
+        
+        $token = $db->QUERY("SELECT * FROM accesstoken WHERE  userId = :userId", $consulta); 
         if (empty($token)) {
-            return false;
+            return "sem tpoken user";
         }
-       $now = time();
 
-       $date = $token[0]['creationDate'];
-       $datexpired = $date + 3600;
+        date_default_timezone_set('America/Sao_Paulo');
+       $now = strtotime(date("Y-m-d H:i:s"));
 
-       if( $now < $datexpired){
-        //valido
-        return true;
-       }else{
-        $db->QUERY("DELETE FROM accesstoken WHERE userId = :userId", $consulta);
-         return [
-            'message' => 'Invalid token2',
-         ];
+       $date = strtotime($token[0]['creationDate']);
+       $datexpired = strtotime('+1 hour', $date);
+
+       if( $now > $datexpired){
+           $db->QUERY("DELETE FROM accesstoken WHERE userId = :userId", $consulta);
+           header('Content-Type: application/json');
+           http_response_code(201);
+           return $token = $this->create_token($params);
+    }else{
+           header('Content-Type: application/json');
+           http_response_code(201);
+           return $token[0]['tokenString'];
        }
 
     }
