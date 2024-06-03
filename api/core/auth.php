@@ -10,13 +10,8 @@ class Auth {
 
     public function create_token($params) {
         $db = new database;
-        
-        if(!is_object($params)){
-            $params = $params[0];
-        }
 
-        $user = $params['username'];    
-        $name = $params['name'];
+        $name = $params['email'];
         
         date_default_timezone_set('America/Sao_Paulo');
         $nowDate = time();
@@ -27,7 +22,6 @@ class Auth {
         ];
 
         $payload = [
-            'username' => $user,
             'name' => $name,
             'create' => $nowDate,
         ];
@@ -44,21 +38,23 @@ class Auth {
         $token = "Bearer" . " " . $header . "." . $payload . "." . $sing;
         
         $consulta = [
-            ':username' => $params['username'],
+            ':email' => $params['email'],
         ];
         
         $nowDate = date("Y-m-d H:i:s",time());
 
-        $results = $db->QUERY('SELECT * FROM  user WHERE username = :username', $consulta);
+        $results = $db->QUERY('SELECT * FROM  user WHERE email = :email', $consulta);
         
         if($results)
         {
             $userId = $results[0]['id'];
         }
         
+        $clear_token = explode(" ", $token);
+
         $insert = [
             ':userId' => $userId,
-            ':tokenString' => $token,
+            ':tokenString' => $clear_token[1],
             ':creationDate' => $nowDate
         ];
         
@@ -75,7 +71,7 @@ class Auth {
 
         
         $consulta = [
-            ':userId' => $params[0]['id']
+            ':userId' => $params['id']
         ];
         
         $exits = $db->QUERY('SELECT id FROM accesstoken WHERE userId = :userId', $consulta);
@@ -96,7 +92,7 @@ class Auth {
         
 
         $consulta = [
-            ':userId' => $params[0]['id']
+            ':userId' => $params['id']
         ];
         
         $token = $db->QUERY("SELECT * FROM accesstoken WHERE  userId = :userId", $consulta); 
@@ -118,7 +114,7 @@ class Auth {
     }else{
            header('Content-Type: application/json');
            http_response_code(201);
-           return $token[0]['tokenString'];
+           return 'Bearer' . ' ' . $token[0]['tokenString'];
        }
 
     }
