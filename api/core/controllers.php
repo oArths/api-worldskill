@@ -56,6 +56,7 @@ class Controllers{
             ':username' => $params['username'],
 
         ];
+
         $results = $db->QUERY('SELECT id FROM user WHERE email = :email OR  username =:username', $consulta);
         if(count($results) != 0  ){
             http_response_code(422);
@@ -111,7 +112,6 @@ class Controllers{
         if(empty($validacao)){
             return "vazio";
         }
-
         if(!$validacao){
             http_response_code(422);
             return $this->erro_response($erro);      
@@ -119,11 +119,37 @@ class Controllers{
             http_response_code(422);
             return $this->erro_messenge('Invalid email or password');
         }
-        
-        // return $validacao;
-        $exist = $auth->exist_token($validacao);
+       $end = $validacao[0];
+
+        $exist = $auth->exist_token($end);
         return $exist;
-    }}
+    }
+
+    public function token_delete($params){
+        $db = new database;
+
+        if(empty($params)){
+            return ;
+        }
+
+        $clear = explode(" ",$params['Authorization']);
+        $token = $clear[1];
+
+        $insert = [
+            ':token' => $token,
+        ];
+        // return $insert;
+
+        $consulta = $db->QUERY('DELETE FROM accesstoken WHERE tokenString = :token', $insert);
+        
+        if($consulta !== false ){
+            return  http_response_code(204); ;
+        }else{
+            return ;
+        }
+    }
 
 
-?>
+
+
+}
