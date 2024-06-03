@@ -9,7 +9,7 @@ class database{
 
         // casa = localhost
         // senai = localhost:3307
-        $host = "localhost";
+        $host = "localhost:3307";
         $user = "root";
         $pass = "";
         $db = "worldskill";
