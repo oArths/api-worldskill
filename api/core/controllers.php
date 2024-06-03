@@ -14,11 +14,13 @@ class Controllers{
 
     public function erro_response($message){
         return [
+            'message' => 'Invalid properties',
+            'errors'=> $message
+        ];
+    }
+    public function erro_messenge($message){
+        return [
             'message' => $message,
-            'errors'=> [
-                'propriedade'=>['error'],
-                'propriedade'=>['error'],
-            ],
         ];
     }
 
@@ -70,47 +72,57 @@ class Controllers{
             ':password' => $pass,
         ];
 
-
+        
         $db-> QUERY("
         INSERT INTO user (name, email, username, password) VALUES
         (:name,:email,:username,:password)", $Insert);
-
+        
+        // return $params;
          $token = $authentic->create_token($params);
+
+
+        header('Content-Type: application/json');
+        http_response_code(201);
         return [
             'token' => $token,
         ];
     }
+    //------------------------------------------------
     public function login_user ($params) {
         $db = new database;
         $auth = new Auth;
-
-        // return $params;
-        // a validação ta errada pq 
-        if((!isset($params['email']) && !isset($params['password'])) && (strlen($params['password']) < 6)){
-            http_response_code(422);
-            return $this->erro_response("Invalid properties4");      
-        }
-
-        $pass = password_hash($params['password'], PASSWORD_DEFAULT);
-
-        $consulta = [
-            ':email' => $params['email'],
-            ':password' => $pass
-
+        $erro = [
+            'propriedade' => ['erro'],
+            'propriedades' => ['erro']
         ];
-        
-        $results = $db->QUERY('SELECT * FROM user WHERE email = :email AND password = :password', $consulta);
-        return $results;
-        if(empty($results)){
+
+        if((!isset($params['email']) || !isset($params['password'])) || (strlen($params['password']) < 6)){
             http_response_code(422);
-            return $this->erro_response("Invalid properties5");
+            return $this->erro_response($erro);      
         }
 
-        $exist = $auth->exist_token($params);
+
+        $Insert = [
+            ':email' => $params['email'],
+        ];
+
+        $validacao = $db->QUERY('SELECT * FROM user WHERE  email = :email', $Insert);
+
+        if(empty($validacao)){
+            return "vazio";
+        }
+
+        if(!$validacao){
+            http_response_code(422);
+            return $this->erro_response($erro);      
+        }elseif(!password_verify($params['password'], $validacao[0]['password'])){
+            http_response_code(422);
+            return $this->erro_messenge('Invalid email or password');
+        }
         
-        if($exist){
-
-        }
+        // return $validacao;
+        $exist = $auth->exist_token($validacao);
+        return $exist;
     }}
 
 
