@@ -39,11 +39,20 @@ $router->add('DELETE', $url . '/api/v1/auth/signout', function() use ($control) 
     $data = getallheaders(); 
      $response = $control->token_delete($data);
 
-    
      echo json_encode($response);
     
     });
 
+$router->add('GET', $url . '/api/v1/movies', function() use ($control){
+
+    $data = $_GET;
+
+    $response = $control->get_movie($data);
+
+    echo json_encode($response); 
+
+
+});
 
 $router->run();
 
