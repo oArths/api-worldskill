@@ -124,7 +124,7 @@ class Controllers{
         $exist = $auth->exist_token($end);
         return $exist;
     }
-
+    //-----------------------------------------------
     public function token_delete($params){
         $db = new database;
 
@@ -138,7 +138,6 @@ class Controllers{
         $insert = [
             ':token' => $token,
         ];
-        // return $insert;
 
         $consulta = $db->QUERY('DELETE FROM accesstoken WHERE tokenString = :token', $insert);
         
@@ -148,8 +147,55 @@ class Controllers{
             return ;
         }
     }
+    public function get_movie($params){
+        $db = new database;
 
+        $validacao = $db->QUERY('SELECT * FROM movie');
+
+        $page = $params['page'];
+        $pagesize = $params['pageSize'];
+        $sortdir = $params['sortDir'];
+        $sortby = $params['sortBy'];
+        
+        if($page < 1 || $page > count($validacao)){
+            $page = 1;
+            $pagesize = 2;
+        }
+        if($pagesize < 1){
+            $pagesize = 4;
+        }
+        if($sortdir !== 'asc' && $sortdir !== 'desc'){
+            $sortdir = 'desc';
+        }
+        if($sortby !== 'title' && $sortby !== 'releaseDate'){
+            $sortby = 'releaseDate';
+        }
+        
+        
+        $offset = ($page - 1) * $pagesize;
+        
+        $consulta = $db->QUERY("SELECT * FROM movie ORDER BY $sortby $sortdir LIMIT $pagesize OFFSET $offset");
+
+        return $consulta;
+
+    }
 
 
 
 }
+
+
+// $page = $params['page'];
+// $pagesize = $params['pageSize'];
+// $offset = ($page - 1) * $pagesize;
+
+// $insert =[
+//     ':page' => $page,
+//    ':pagesize' => $pagesize,
+//    ':sortdir' => $params['sortDir'],
+//     ':sortby' => $params['sortBy'],
+//     ':offset' => $offset
+// ];
+
+
+// $consulta = $db->QUERY("SELECT * FROM movies ORDER BY :sortby :sortdir LIMIT :pagesize OFFSET :offset", $insert);
