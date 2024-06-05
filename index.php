@@ -7,6 +7,7 @@ require_once('./api/core/controllers.php');
 $router = new Router;
 $control = new Controllers;
 
+
 $router->add('GET', $url . '/status', function() use ($control) {
      $response = $control->api_status();
 
@@ -53,6 +54,11 @@ $router->add('GET', $url . '/api/v1/movies', function() use ($control){
 
 
 });
+$router->add('GET',  $url . '/api/v1/movies/' . '(\d+)', function($id) use ($control) {
+    $response = $id;
+    echo json_encode($response);
+});
+
 
 $router->run();
 
