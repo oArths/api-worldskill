@@ -147,7 +147,7 @@ class Controllers{
             return ;
         }
     }
-    public function get_movie($params){
+    public function get_any_movie($params){
         $db = new database;
 
         $validacao = $db->QUERY('SELECT * FROM movie');
@@ -179,23 +179,96 @@ class Controllers{
         return $consulta;
 
     }
+    public function get_movie($params){
+        $db = new database;
+        $insert = [
+            ':id' => $params
+        ];
+
+        $validacao = $db->QUERY('SELECT * FROM movie WHERE id = :id', $insert);
+
+        if(empty($validacao)){
+            http_response_code(404);
+            return $this->erro_messenge('Invalid movie id');
+        }
+        $credit = $db->QUERY
+        ('SELECT 
+            name, photoUrl, role.title, artist.id
+        FROM 
+            credit
+        JOIN 
+            artist ON artistId = artist.id
+        JOIN 
+            role ON roleId = role.id
+        WHERE
+            credit.movieId = :id 
+        ', $insert);
+
+
+        if (!empty($validacao)) {
+            $last_item = end($validacao);
+            $last_item['credit'] = [$credit];
+
+            $results = $data[key($validacao)] = $last_item;
+            return $results;
+        }
+        
+
+        return $this->erro_messenge('Invalid movie id');
+
+
+
+    }
+    public function get_artist($params){
+        $db = new database;
+
+        $consulta = $db->QUERY('SELECT * FROM artist');
+
+        $page = $params['page'];
+        $pagesize = $params['pageSize'];
+        $sortDir = $params['sortDir'];
+
+        if($page < 1){
+            $page = 1;
+        }
+        if($pagesize < 1){
+            $pagesize = 1;
+        }
+        if($sortDir !== 'asc' && $sortDir !== 'desc'){
+            $sortDir = 'asc';
+        }
+
+        $offset = ($page - 1) * $pagesize;
+
+        $results = $db->QUERY("SELECT  id, name, photoUrl FROM artist ORDER BY  id $sortDir LIMIT $pagesize OFFSET $offset");
+
+        return $results;
+    }
+    public function get_any_genres($params){
+        $db = new database;
+
+        $consulta = $db->QUERY('SELECT * FROM genre');
+
+        $page = $params['page'];
+        $pagesize = $params['pageSize'];
+        $sortDir = $params['sortDir'];
+
+        if($page < 1){
+            $page = 1;
+        }
+        if($pagesize < 1){
+            $pagesize = 1;
+        }
+        if($sortDir !== 'asc' && $sortDir !== 'desc'){
+            $sortDir = 'desc';
+        }
+        $offset = ($page - 1) * $pagesize;
+        
+        $consulta = $db->QUERY("SELECT * FROM genre ORDER BY id $sortDir LIMIT $pagesize OFFSET $offset");
+
+        return $consulta;
+    }
 
 
 
 }
-
-
-// $page = $params['page'];
-// $pagesize = $params['pageSize'];
-// $offset = ($page - 1) * $pagesize;
-
-// $insert =[
-//     ':page' => $page,
-//    ':pagesize' => $pagesize,
-//    ':sortdir' => $params['sortDir'],
-//     ':sortby' => $params['sortBy'],
-//     ':offset' => $offset
-// ];
-
-
-// $consulta = $db->QUERY("SELECT * FROM movies ORDER BY :sortby :sortdir LIMIT :pagesize OFFSET :offset", $insert);
