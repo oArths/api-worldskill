@@ -446,6 +446,19 @@ class Controllers{
     
         return $this->content($base64Content);
     }
+    public function create_reviews($params){
+        $erro = [
+            'propriedade' => ['erro'],
+            'propriedades' => ['erro']
+        ];
+        if(empty($params['id']) || empty($params['token'])){
+
+            return $this->erro_response($erro);
+
+        }
+
+        return  $params;
+    }
 
 }
 

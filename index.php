@@ -92,12 +92,25 @@ $router->add('GET', $url . '/api/v1/media/', function() use ($control){
     $clear = explode('/',$_SERVER['REQUEST_URI']);
 
     $data = end($clear);
-    // return $clear;
     $response = $control->getMediaContent($data);
 
     echo json_encode($response);
 });
+$router->add('POST', $url . '/api/v1/reviews/', function() use ($control){
+    $clear = explode('/', $_SERVER['REQUEST_URI']);
+    $id = end($clear);
+    $header = getallheaders();
 
+   $params = [
+    'id' => $id,
+    'token' => $header['Authorization']
+   ];
+   
+    $response = $control->create_reviews($params);
+
+    echo json_encode($response);
+
+});
 $router->run();
 
 ?>
