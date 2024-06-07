@@ -59,7 +59,7 @@ $router->add('GET',  $url . '/api/v1/movies/', function() use ($control) {
 $router->add('GET', $url . '/api/v1/artists', function() use ($control){
         $data = $_GET;
 
-        $response = $control->get_artist($data);
+        $response = $control->get_any_artist($data);
 
         echo json_encode($response);
 
@@ -71,7 +71,32 @@ $router->add('GET',  $url . '/api/v1/genres', function()  use ($control){
     echo json_encode($response);
 
 });
+$router->add('GET', $url . '/api/v1/artists/', function() use ($control){
+    $clear = explode('/',$_SERVER['REQUEST_URI']);
 
+    $data = end($clear);
+
+    $response = $control->get_artist($data);
+
+    echo json_encode($response);
+});
+$router->add('GET', $url . '/api/v1/reviews', function() use ($control){
+    
+    $data = $_GET; 
+
+    $response = $control->get_any_reviews($data);
+
+    echo json_encode($response);
+});
+$router->add('GET', $url . '/api/v1/media/', function() use ($control){
+    $clear = explode('/',$_SERVER['REQUEST_URI']);
+
+    $data = end($clear);
+    // return $clear;
+    $response = $control->getMediaContent($data);
+
+    echo json_encode($response);
+});
 
 $router->run();
 
