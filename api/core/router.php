@@ -19,7 +19,7 @@ class Router {
         $end = end($id);
 
 
-        if(preg_match('/^[0-9]+$/', $end)){
+        if(preg_match('/^[0-9a-zA-Z.]+$/', $end)){
            array_pop($id);
            $newpath = implode('/', $id) ;
             $newpath = $newpath . '/';
