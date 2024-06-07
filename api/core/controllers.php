@@ -23,6 +23,11 @@ class Controllers{
             'message' => $message,
         ];
     }
+    public function content($message){
+        return [
+            'content' => $message,
+        ];
+    }
 
 
 
@@ -219,7 +224,32 @@ class Controllers{
 
 
     }
-    public function get_artist($params){
+    public function get_movie_inter($params){
+        $db = new database;
+        $insert = [
+            ':id' => $params
+        ];
+
+        $validacao = $db->QUERY('SELECT * FROM movie WHERE id = :id', $insert);
+
+        if(empty($validacao)){
+            http_response_code(404);
+            return $this->erro_messenge('Invalid movie id');
+        }
+   
+
+        if (!empty($validacao)) {
+        
+            return $validacao;
+        }
+        
+
+        return $this->erro_messenge('Invalid movie id');
+
+
+
+    }
+    public function get_any_artist($params){
         $db = new database;
 
         $consulta = $db->QUERY('SELECT * FROM artist');
@@ -243,6 +273,47 @@ class Controllers{
         $results = $db->QUERY("SELECT  id, name, photoUrl FROM artist ORDER BY  id $sortDir LIMIT $pagesize OFFSET $offset");
 
         return $results;
+    }
+    public function get_artist($params){
+        $db = new database;
+
+        $insert = [
+            ':id' => $params
+        ];
+
+        $consulta = $db->QUERY('SELECT * FROM artist WHERE id = :id', $insert);
+
+        if(empty($consulta)){
+            http_response_code(404);
+            return $this->erro_messenge('Invalid artist id');
+        }
+
+        $query = $db->QUERY(
+            'SELECT movie.id, movie.title, movie.durationMinutes, movie.releaseDate, movie.posterUrl
+            FROM 
+            credit
+            JOIN 
+             movie ON credit.movieId = movie.Id
+             WHERE credit.artistId = :id
+            ', $insert);
+
+        $id = $query[0]['id'];
+            if(!empty($query)){
+
+                $final = end($query);
+                $final['singlePageUrl'] = "/api-worldskill/api/v1/movies/$id";
+                $newQuery = $final;
+            }
+
+         if(!empty($consulta)){
+            $movie = end($consulta);
+            $movie['movies'] = [$newQuery];
+
+            $results = $data[key($consulta)] = $movie;
+            return $results;
+         }
+
+
     }
     public function get_any_genres($params){
         $db = new database;
@@ -268,7 +339,114 @@ class Controllers{
 
         return $consulta;
     }
+    public function get_any_reviews($params){
+        $db = new database;
+
+        $id = $params['id'];
+        $page = $params['page'];
+        $pagesize = $params['pageSize'];
+        $pagedir = $params['sortDir'];
+        $sortby = $params['sortBy'];
 
 
+
+        if($page < 1){
+            $page = 1;
+        }
+        if($pagesize < 1){
+            $pagesize = 1;
+        }
+        if($pagedir !== 'asc' && $pagedir !== 'desc'){
+            $pagedir = 'desc';
+        }
+        if($sortby !== 'stars' && $sortby !== 'createdAt'){
+            $sortby == 'stars';
+        }
+
+        $offset = ($page - 1) * $pagesize;
+
+        $consulta  = $db->QUERY("SELECT * FROM review ORDER BY stars $pagedir LIMIT $pagesize OFFSET $offset");
+
+
+        $review = $db->QUERY
+        ("SELECT reviewevaluation.positive, review.movieId
+         FROM
+            review
+        JOIN reviewevaluation ON reviewevaluation.id = review.id
+        WHERE review.userId = $id
+         ");
+
+
+        if(!empty($review)){
+            $reviewMap =[];
+            foreach ($review as $map) {
+                $reviewMap[$map['movieId']] = $map;
+                }
+        }
+       
+        if(!empty($consulta)){
+            $newconsulta = [];
+            foreach ($consulta as $avaliacao) {
+                if(isset($reviewMap[$avaliacao['movieId']])){
+                    $avaliacao['myEvalution'] = $reviewMap[$avaliacao['movieId']]['positive'];
+                }else{
+                    $avaliacao['myEvalution'] = 0;
+                }
+                $newconsulta[] = $avaliacao;
+            }
+            return $newconsulta;
+        }
+
+    }
+    function getMediaContent($id) {
+        $db = new database();
+        $clear = explode('.', $id);
+        $id = $clear[0];
+        $ext = '.' . $clear[1];
+
+        if($ext !== '.jpg' && $ext !== '.mp4'){
+            http_response_code(404);
+            return $this->erro_messenge("Could not find any file with the id $id");
+
+        }
+        $result = $db->query("
+        SELECT 'photoUrl' AS type, photoUrl AS url FROM artist WHERE photoUrl = $id
+        UNION
+        SELECT 'posterUrl' AS type, posterUrl AS url FROM movie WHERE posterUrl = $id
+        UNION
+        SELECT 'trailerUrl' AS type, trailerUrl AS url FROM movie WHERE trailerUrl = $id
+        ");
+        if (empty($result)) {
+            http_response_code(404);
+            return $this->erro_messenge("Could not find any file with the id $id");
+        }
+
+        if($result[0]['type'] === 'trailerUrl' && $ext !== '.mp4'){
+            return $this->erro_messenge("Cosddshe id $id");
+        }
+        if($result[0]['type'] === 'posterUrl' && $ext !== '.jpg'){
+            return $this->erro_messenge("Cosddshe id $id");
+        }
+        if($result[0]['type'] === 'photoUrl' && $ext !== '.jpg'){
+            return $this->erro_messenge("Cosddshe id $id");
+        }
+
+        $fileName = $result[0]['url'];
+        $baseDir = dirname(__FILE__) . "\\media\\"; 
+        $filePath = $baseDir . $fileName . $ext;
+
+        if (!file_exists($filePath)) {
+            http_response_code(404);
+            return $this->erro_messenge("Could not find any file with the id $id");
+        }
+    
+        $fileContent = file_get_contents($filePath);
+    
+        $base64Content = base64_encode($fileContent);
+    
+        return $this->content($base64Content);
+    }
 
 }
+
+
