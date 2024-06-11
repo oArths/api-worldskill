@@ -127,7 +127,8 @@ class Controllers{
        $end = $validacao[0];
 
         $exist = $auth->exist_token($end);
-        return $exist;
+        $token = $exist['token'];
+        return $token;
     }
     //-----------------------------------------------
     public function token_delete($params){
@@ -447,17 +448,32 @@ class Controllers{
         return $this->content($base64Content);
     }
     public function create_reviews($params){
+        $auth = new Auth;
+
+        $brutToken = isset($params['token']) ? $params['token'] : null;
+        $cleartoken = explode(" ", $brutToken);
+        $token['id'] = $cleartoken[1];
+        $star = isset($params['data']['stars']) ? $params['data']['stars'] : null;
+        $movieId = isset($params['data']['movieId']) ? $params['data']['movieId'] : null;
+        $content = isset($params['data']['content']) ? $params['data']['content'] : null;
+
         $erro = [
             'propriedade' => ['erro'],
             'propriedades' => ['erro']
         ];
-        if(empty($params['id']) || empty($params['token'])){
-
+        
+        if(empty($star) || empty($content)){
+            http_response_code(422);
             return $this->erro_response($erro);
-
+        }
+        if(empty($movieId)){
+            http_response_code(400);
+            return $this->erro_messenge('Invalid movie id');
         }
 
-        return  $params;
+        $exist = $auth->is_valid($token);
+
+        return  $exist;
     }
 
 }

@@ -43,7 +43,7 @@ $router->add('DELETE', $url . '/api/v1/auth/signout', function() use ($control) 
 $router->add('GET', $url . '/api/v1/movies', function() use ($control){
 
     $data = $_GET;
-
+    
     $response = $control->get_any_movie($data);
     echo json_encode($response); 
 
@@ -97,16 +97,16 @@ $router->add('GET', $url . '/api/v1/media/', function() use ($control){
     echo json_encode($response);
 });
 $router->add('POST', $url . '/api/v1/reviews/', function() use ($control){
-    $clear = explode('/', $_SERVER['REQUEST_URI']);
-    $id = end($clear);
+    $get = $_GET;
     $header = getallheaders();
+    $token = $header['Authorization'];
 
-   $params = [
-    'id' => $id,
-    'token' => $header['Authorization']
-   ];
-   
-    $response = $control->create_reviews($params);
+    $data = [
+        'data'=> $get,
+        'token' => $token    
+    ];
+
+    $response = $control->create_reviews($data);
 
     echo json_encode($response);
 

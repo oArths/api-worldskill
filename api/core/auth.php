@@ -11,19 +11,20 @@ class Auth {
     public function create_token($params) {
         $db = new database;
 
-        $name = $params['email'];
+        $email = $params['email'];
         
         date_default_timezone_set('America/Sao_Paulo');
         $nowDate = time();
-        
+
         $header = [
             'typ' => 'JWT',
             'alg' => 'HS256',
         ];
 
         $payload = [
-            'name' => $name,
+            'email' => $email,
             'create' => $nowDate,
+            'exp' => $nowDate = 3600
         ];
         
         $header = json_encode($header);
@@ -66,27 +67,27 @@ class Auth {
         return $token;       
     }
 
-    public function exist_token($params){
-        $db = new database;
+    public function valid_token($token){
+        
+        
+        list($header, $payload, $signature) = explode('.', $token);
+        
+        $dec_header = json_decode(base64_decode($header, true));
+        $dec_payload = json_decode(base64_decode($payload, true));
+        
+        $valid_signature = base64_decode(hash_hmac('sha256', $header . "." . $payload, $this->key,true));
 
-        
-        $consulta = [
-            ':userId' => $params['id']
-        ];
-        
-        $exits = $db->QUERY('SELECT id FROM accesstoken WHERE userId = :userId', $consulta);
-        
-        if(empty($exits)){
-            header('Content-Type: application/json');
-            http_response_code(201);
-            $token = $this->create_token($params);
-            return $token;
-        }else{
-           return $this->is_valid($params);
+        echo json_encode($valid_signature) ;
+
+        if($signature !== $valid_signature){
+            return false;
         }
-        
-        
+        if($dec_payload['exp'] < time()){
+            return false;
+        }
+        return $dec_payload;
     }
+
     public function is_valid ($params) {
         $db = new database;
         
@@ -108,13 +109,23 @@ class Auth {
 
        if( $now > $datexpired){
            $db->QUERY("DELETE FROM accesstoken WHERE userId = :userId", $consulta);
-           header('Content-Type: application/json');
+           $token = $this->create_token($params);
+           $response = [
+               'type' => 'expired',
+               'token' => $token
+               ];
+            header('Content-Type: application/json');
            http_response_code(201);
-           return $token = $this->create_token($params);
+           return $response;
     }else{
+        $token = 'Bearer ' . $token[0]['tokenString'];
+            $response = [
+            'type' => 'exist',
+            'token' => $token
+            ];
            header('Content-Type: application/json');
-           http_response_code(201);
-           return 'Bearer' . ' ' . $token[0]['tokenString'];
+           http_response_code(200);
+           return $response;
        }
 
     }
