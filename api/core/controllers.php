@@ -127,6 +127,7 @@ class Controllers{
        $end = $validacao[0];
 
         $exist = $auth->exist_token($end);
+      
         $token = $exist['token'];
         return $token;
     }

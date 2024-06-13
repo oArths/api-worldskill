@@ -27,15 +27,15 @@ class Router
             return;
         }
 
-        $authHeader = $header['Authorization'];
-        $token = explode(' ', $authHeader)[1];
-        $userData = $auth->valid_token($token);
+        // $authHeader = $header['Authorization'];
+        // $token = explode(' ', $authHeader)[1];
+        // $userData = $auth->valid_token($token);
 
-        if (!$userData) {
-            http_response_code(403);
-            echo json_encode(['message' => 'Invalid tokejmn']);
-            return;
-        }
+        // if (!$userData) {
+        //     http_response_code(403);
+        //     echo json_encode(['message' => 'Invalid tokejmn']);
+        //     return;
+        // }
 
         $id = explode('/', $path);
         $end = end($id);
