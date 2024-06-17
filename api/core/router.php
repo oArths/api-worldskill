@@ -18,14 +18,14 @@ class Router
         $method = $_SERVER['REQUEST_METHOD'];
         $path = $_SERVER['REQUEST_URI'];
         $queryString = $_SERVER['QUERY_STRING'];
-        $auth = new Auth;
-        $header = getallheaders();
+        // $auth = new Auth;
+        // $header = getallheaders();
        
-        if (!isset($header['Authorization'])) {
-            http_response_code(401);
-            echo json_encode(['message' => 'Unauthenticated user']);
-            return;
-        }
+        // if (!isset($header['Authorization'])) {
+        //     http_response_code(401);
+        //     echo json_encode(['message' => 'Unauthenticated user']);
+        //     return;
+        // }
 
         // $authHeader = $header['Authorization'];
         // $token = explode(' ', $authHeader)[1];
