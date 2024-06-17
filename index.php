@@ -3,6 +3,7 @@ $url ='/api-worldskill';
 
 require_once('./api/core/router.php');
 require_once('./api/core/controllers.php');
+require_once('./api/core/auth.php');
 
 $router = new Router;
 $control = new Controllers;
@@ -97,9 +98,17 @@ $router->add('GET', $url . '/api/v1/media/', function() use ($control){
     echo json_encode($response);
 });
 $router->add('POST', $url . '/api/v1/reviews/', function() use ($control){
+
     $get = $_GET;
     $header = getallheaders();
-    $token = $header['Authorization'];
+    
+    if(!isset($header['Authorization']) || empty($header['Authorization'])){
+        http_response_code(401);
+        echo json_encode($control->erro_messenge('Unauthenticated user'));
+        return ;
+    }else{
+        $token = $header['Authorization'];
+    }
 
     $data = [
         'data'=> $get,
@@ -111,6 +120,7 @@ $router->add('POST', $url . '/api/v1/reviews/', function() use ($control){
     echo json_encode($response);
 
 });
+
 $router->run();
 
 ?>
