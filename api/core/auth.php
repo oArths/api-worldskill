@@ -11,6 +11,8 @@ class Auth {
     public function create_token($params) {
         $db = new database;
 
+        // return $params;
+
         $email = $params['email'];
         
         date_default_timezone_set('America/Sao_Paulo');
@@ -24,7 +26,7 @@ class Auth {
         $payload = [
             'email' => $email,
             'create' => $nowDate,
-            'exp' => $nowDate = 3600
+            'exp' => $nowDate + 3600
         ];
         
         $header = json_encode($header);
@@ -69,23 +71,43 @@ class Auth {
 
     public function valid_token($token){
         
-        
         list($header, $payload, $signature) = explode('.', $token);
+
+        // $explode = explode('.', $token);
+        // $header = $explode[0];
+        // $payload = $explode[1];
+        // $signature = $explode[2];
+
+        // return $signature;
         
         $dec_header = json_decode(base64_decode($header, true));
-        $dec_payload = json_decode(base64_decode($payload, true));
-        
-        $valid_signature = base64_decode(hash_hmac('sha256', $header . "." . $payload, $this->key,true));
+        $dec_payload = json_decode(base64_decode($payload));
 
-        echo json_encode($valid_signature) ;
+        $valid_signature = base64_encode(hash_hmac('sha256', $header . "." . $payload, $this->key,true));
 
         if($signature !== $valid_signature){
             return false;
         }
-        if($dec_payload['exp'] < time()){
+        if($dec_payload->exp < time()){
             return false;
         }
         return $dec_payload;
+    }
+
+    public function delete_token($token){
+        $db = new database;
+
+        $insert = [
+            ':token' => $token,
+        ];
+
+        $consulta = $db->QUERY('DELETE FROM accesstoken WHERE tokenString = :token', $insert);
+
+        if($consulta !== false){
+            return true;
+        }else{
+            return false;
+        }
     }
 
     public function is_valid ($params) {
