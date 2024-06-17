@@ -1,7 +1,7 @@
 <?php
 include_once(dirname(__FILE__) . '/../config/database.php');
 include_once(dirname(__FILE__) . '/../core/auth.php');
-
+date_default_timezone_set('America/Sao_Paulo');
 
 class Controllers{
     private $params;
@@ -107,15 +107,15 @@ class Controllers{
             return $this->erro_response($erro);      
         }
 
-
         $Insert = [
             ':email' => $params['email'],
         ];
-
+        
         $validacao = $db->QUERY('SELECT * FROM user WHERE  email = :email', $Insert);
-
+        
         if(empty($validacao)){
-            return "vazio";
+            http_response_code(422);
+            return $this->erro_response($erro);    ;
         }
         if(!$validacao){
             http_response_code(422);
@@ -124,12 +124,28 @@ class Controllers{
             http_response_code(422);
             return $this->erro_messenge('Invalid email or password');
         }
-       $end = $validacao[0];
+        
+        $consulta = [
+            ':userId' => $validacao[0]['id']
+        ];
+        
+        $token = $db->QUERY("SELECT tokenString FROM accesstoken WHERE userId = :userId ", $consulta);
 
-        $exist = $auth->exist_token($end);
-      
-        $token = $exist['token'];
-        return $token;
+        
+        if(empty($token)){
+            return $auth->create_token($params);
+        }
+        
+        $valid = $auth->valid_token($token[0]['tokenString']);
+        
+        if($valid !== true){
+            $newparams = $params;
+            $auth->delete_token($token[0]['tokenString']);
+            return $auth->create_token($newparams);
+        }else{
+            return $token;    
+        }
+        
     }
     //-----------------------------------------------
     public function token_delete($params){
@@ -450,14 +466,19 @@ class Controllers{
     }
     public function create_reviews($params){
         $auth = new Auth;
+        $db = new database;
 
         $brutToken = isset($params['token']) ? $params['token'] : null;
         $cleartoken = explode(" ", $brutToken);
-        $token['id'] = $cleartoken[1];
+        $token = $cleartoken[1];
+
+       
+
+
         $star = isset($params['data']['stars']) ? $params['data']['stars'] : null;
         $movieId = isset($params['data']['movieId']) ? $params['data']['movieId'] : null;
         $content = isset($params['data']['content']) ? $params['data']['content'] : null;
-
+        // return $movieId;
         $erro = [
             'propriedade' => ['erro'],
             'propriedades' => ['erro']
@@ -472,9 +493,41 @@ class Controllers{
             return $this->erro_messenge('Invalid movie id');
         }
 
-        $exist = $auth->is_valid($token);
+        $exist = $auth->valid_token($token);
+        // return $exist;
 
-        return  $exist;
+        if($exist == false ){
+            http_response_code(403);
+            return $this->erro_messenge('Invalid token');
+        }
+        $emailUser = [':email'=> $exist->email];
+        
+        $userId = $db->QUERY("SELECT id FROM user WHERE email = :email", $emailUser)[0]['id'];
+        // return $userId;
+
+        $reviewExist = $db->QUERY("SELECT * FROM review where $movieId = movieId AND userId = $userId");
+
+        $params = [
+            ':movieId' => $movieId,
+            ':stars' => $star,
+            ':content' => $content,
+            ':userId' => $userId,
+            ':createdAt'=> date("Y-m-d H:i:s",time())
+        ];
+
+        if(empty($reviewExist)){
+            $db->QUERY("INSERT INTO review ( userId, movieId, content, stars, createdAt) 
+            VALUES ( :userId, :movieId, :content, :stars, :createdAt)", $params);
+            return $this->erro_messenge('Review has been successfully created');
+            
+
+        }else{
+            $db->QUERY("UPDATE review SET movieId = :movieId, content = :content, stars = :stars, createdAt = :createdAt WHERE userId = :userId ", $params);
+            return$this->erro_messenge('Review has been successfully update');
+            
+            
+        }
+
     }
 
 }
