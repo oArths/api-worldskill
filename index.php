@@ -43,22 +43,66 @@ $router->add('DELETE', $url . '/api/v1/auth/signout', function() use ($control) 
 
 $router->add('GET', $url . '/api/v1/movies', function() use ($control){
 
-    $data = $_GET;
+    $get = $_GET;
+    $header = getallheaders();
+    
+        if(!isset($header['Authorization']) || empty($header['Authorization'])){
+            http_response_code(401);
+            echo json_encode($control->erro_messenge('Unauthenticated user'));
+            return ;
+        }else{
+            $token = explode(" ", $header['Authorization'])[1];
+        }
+    
+        $data = [
+            'data'=> $get,
+            'token' => $token    
+        ];
     
     $response = $control->get_any_movie($data);
     echo json_encode($response); 
 
 
 });
+
 $router->add('GET',  $url . '/api/v1/movies/', function() use ($control) {
     $clear = explode('/', $_SERVER['REQUEST_URI']);
     $id = end($clear);
+    $header = getallheaders();
+    
+        if(!isset($header['Authorization']) || empty($header['Authorization'])){
+            http_response_code(401);
+            echo json_encode($control->erro_messenge('Unauthenticated user'));
+            return ;
+        }else{
+            $token = explode(" ", $header['Authorization'])[1];
+        }
+    
+        $data = [
+            'data'=> $id,
+            'token' => $token    
+        ];
 
-    $response = $control->get_movie($id);
+    $response = $control->get_movie($data);
     echo json_encode($response);
 });
+
 $router->add('GET', $url . '/api/v1/artists', function() use ($control){
-        $data = $_GET;
+        $get = $_GET;
+        $header = getallheaders();
+    
+        if(!isset($header['Authorization']) || empty($header['Authorization'])){
+            http_response_code(401);
+            echo json_encode($control->erro_messenge('Unauthenticated user'));
+            return ;
+        }else{
+            $token = explode(" ", $header['Authorization'])[1];
+        }
+    
+        $data = [
+            'data'=> $get,
+            'token' => $token    
+        ];
 
         $response = $control->get_any_artist($data);
 
@@ -66,16 +110,46 @@ $router->add('GET', $url . '/api/v1/artists', function() use ($control){
 
 
 });
+
 $router->add('GET',  $url . '/api/v1/genres', function()  use ($control){
-    $data = $_GET;
+    $get = $_GET;
+    $header = getallheaders();
+    
+    if(!isset($header['Authorization']) || empty($header['Authorization'])){
+        http_response_code(401);
+        echo json_encode($control->erro_messenge('Unauthenticated user'));
+        return ;
+    }else{
+        $token = explode(" ", $header['Authorization'])[1];
+    }
+
+    $data = [
+        'data'=> $get,
+        'token' => $token    
+    ];
     $response = $control->get_any_genres($data);
     echo json_encode($response);
 
 });
+
 $router->add('GET', $url . '/api/v1/artists/', function() use ($control){
     $clear = explode('/',$_SERVER['REQUEST_URI']);
 
-    $data = end($clear);
+    $get = end($clear);
+    $header = getallheaders();
+    
+    if(!isset($header['Authorization']) || empty($header['Authorization'])){
+        http_response_code(401);
+        echo json_encode($control->erro_messenge('Unauthenticated user'));
+        return ;
+    }else{
+        $token = explode(" ", $header['Authorization'])[1];
+    }
+
+    $data = [
+        'data'=> $get,
+        'token' => $token    
+    ];
 
     $response = $control->get_artist($data);
 
@@ -83,16 +157,46 @@ $router->add('GET', $url . '/api/v1/artists/', function() use ($control){
 });
 $router->add('GET', $url . '/api/v1/reviews', function() use ($control){
     
-    $data = $_GET; 
+    $get = $_GET; 
+    $header = getallheaders();
+    
+    if(!isset($header['Authorization']) || empty($header['Authorization'])){
+        http_response_code(401);
+        echo json_encode($control->erro_messenge('Unauthenticated user'));
+        return ;
+    }else{
+        $token = explode(" ", $header['Authorization'])[1];
+    }
+
+    $data = [
+        'data'=> $get,
+        'token' => $token    
+    ];
 
     $response = $control->get_any_reviews($data);
 
     echo json_encode($response);
 });
+
 $router->add('GET', $url . '/api/v1/media/', function() use ($control){
     $clear = explode('/',$_SERVER['REQUEST_URI']);
+    $header = getallheaders();
+    
+    if(!isset($header['Authorization']) || empty($header['Authorization'])){
+        http_response_code(401);
+        echo json_encode($control->erro_messenge('Unauthenticated user'));
+        return ;
+    }else{
+        $token = explode(" ", $header['Authorization'])[1];
+    }
 
-    $data = end($clear);
+    
+    $id = end($clear);
+
+    $data = [
+        'data'=> $id,
+        'token' => $token    
+    ];
     $response = $control->getMediaContent($data);
 
     echo json_encode($response);
