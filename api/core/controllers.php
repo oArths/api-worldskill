@@ -588,6 +588,41 @@ class Controllers{
         }
 
     }
+    public function delete_reviews($params){
+        $auth = new Auth;
+        $db = new database;
+        $idreview = $params['data']['reviewId'];
+        // return $params;
+        $exist = $auth->valid_token($params['token']);
+        
+
+        if($exist == false ){
+            http_response_code(403);
+            return $this->erro_messenge('Invalid token');
+        }
+
+        $idExisted = $db->QUERY("SELECT * FROM reviewevaluation WHERE reviewId = $idreview ");
+
+        if(empty($idExisted)){
+            http_response_code(400);
+            return $this->erro_messenge('Invalid review id');
+        }
+        $emailUser = [':email'=> $exist->email];
+        
+        $userId = $db->QUERY("SELECT id FROM user WHERE email = :email", $emailUser)[0]['id'];
+        
+        $reviewuser = $db->QUERY("SELECT * FROM reviewevaluation WHERE reviewId = $idreview AND userId = $userId ");
+        if(empty($reviewuser)){
+            http_response_code(404);
+        return $this->erro_messenge('You haven`t published a evaluation to this review');
+        }
+
+       $delete =  $db->QUERY("DELETE FROM reviewevaluation WHERE reviewId = $idreview AND userId = $userId");
+        if($delete){
+            http_response_code(204);
+            return;
+        }
+    }
 
 }
 
