@@ -18,24 +18,7 @@ class Router
         $method = $_SERVER['REQUEST_METHOD'];
         $path = $_SERVER['REQUEST_URI'];
         $queryString = $_SERVER['QUERY_STRING'];
-        // $auth = new Auth;
-        // $header = getallheaders();
-       
-        // if (!isset($header['Authorization'])) {
-        //     http_response_code(401);
-        //     echo json_encode(['message' => 'Unauthenticated user']);
-        //     return;
-        // }
-
-        // $authHeader = $header['Authorization'];
-        // $token = explode(' ', $authHeader)[1];
-        // $userData = $auth->valid_token($token);
-
-        // if (!$userData) {
-        //     http_response_code(403);
-        //     echo json_encode(['message' => 'Invalid tokejmn']);
-        //     return;
-        // }
+      
 
         $id = explode('/', $path);
         $end = end($id);
@@ -61,7 +44,7 @@ class Router
             }
             http_response_code(404);
             header('Content-Type: application/json');
-            echo json_encode(['message' => 'Endpoint not found1']);
+            echo json_encode(['message' => 'Endpoint not found']);
         } elseif (!empty($queryString)) {
             
             $clear = explode("?", $path);
@@ -76,7 +59,7 @@ class Router
             }
             http_response_code(404);
             header('Content-Type: application/json');
-            echo json_encode(['message' => 'Endpoint not found2']);
+            echo json_encode(['message' => 'Endpoint not found']);
         } else {
             foreach ($this->routes as $route) {
                 if ($route['method'] === $method && $route['path'] === $path) {
@@ -87,7 +70,7 @@ class Router
             }
             http_response_code(404);
             header('Content-Type: application/json');
-            echo json_encode(['message' => 'Endpoint not found3',]);
+            echo json_encode(['message' => 'Endpoint not found',]);
         }
     }
 }
