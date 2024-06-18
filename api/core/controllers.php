@@ -83,7 +83,6 @@ class Controllers{
         INSERT INTO user (name, email, username, password) VALUES
         (:name,:email,:username,:password)", $Insert);
         
-        // return $params;
          $token = $authentic->create_token($params);
 
 
@@ -189,7 +188,11 @@ class Controllers{
         $exist = $auth->valid_token($params['token']);
 
         if($exist == false ){
+            $insert = [
+                ':token' => $params['token']
+            ];
             http_response_code(403);
+             $db->QUERY('DELETE FROM accesstoken WHERE tokenString = :token', $insert);
             return $this->erro_messenge('Invalid token');
         }
 
@@ -216,24 +219,47 @@ class Controllers{
         $offset = ($page - 1) * $pagesize;
         
         $consulta = $db->QUERY("SELECT * FROM movie ORDER BY $sortby $sortdir LIMIT $pagesize OFFSET $offset");
+        
+        $movies = [];
+        foreach($consulta as $movie){
+            $fromat = explode("-", $movie['releaseDate']);
+            $date = implode('/', array_reverse($fromat));
+            
+            $movies[] = [
+                'id' =>$movie['id'],
+                'title' =>$movie['title'],
+                'durationMinutes' =>$movie['durationMinutes'],
+                'releaseDate' =>$date,
+                'posterUrl' => '/api-worldskill/api/v1/media/' . $movie['posterUrl'],
+                'singlePageUrl' =>'/api-worldskill/api/v1/movies/' . $movie['id'],
+            ];
+        
+        }
 
-        return $consulta;
+
+        return $movies;
 
     }
     public function get_movie($params){
         $db = new database;
         $auth = new Auth;
 
-        $insert = [
-            ':id' => $params['data']
-        ];
+       
         $exist = $auth->valid_token($params['token']);
 
         if($exist == false ){
+            $insert = [
+                ':token' => $params['token']
+            ];
             http_response_code(403);
+             $db->QUERY('DELETE FROM accesstoken WHERE tokenString = :token', $insert);
             return $this->erro_messenge('Invalid token');
         }
-        $validacao = $db->QUERY('SELECT * FROM movie WHERE id = :id', $insert);
+        $consulta = [
+            ':id' => $params['data']
+        ];
+        // return $consulta;
+        $validacao = $db->QUERY('SELECT * FROM movie WHERE id = :id', $consulta);
 
         if(empty($validacao)){
             http_response_code(404);
@@ -250,65 +276,60 @@ class Controllers{
             role ON roleId = role.id
         WHERE
             credit.movieId = :id 
-        ', $insert);
+        ', $consulta);
+        
+        $movieEnpooint = [];
+        if(!empty($validacao)){
+            foreach($validacao as $movie){
+ 
+                $movieEnpooint[] = [
+                    'title' =>$movie['title'],
+                    'synopsis' =>$movie['synopsis'],
+                    'durationMinutes' =>$movie['durationMinutes'],
+                    'releaseDate' =>$movie['releaseDate'],
+                    'posterUrl' => '/api-worldskill/api/v1/media/' . $movie['posterUrl'],
+                    'trailerUrl' => '/api-worldskill/api/v1/media/' . $movie['trailerUrl'],
+                ];
+            
+           }
 
+        }
+         $artists = [];
+         foreach($credit as $artist){
+ 
+             $artists[] = [
+                 'artistId' =>$artist['id'],
+                 'name' =>$artist['name'],
+                 'role' =>$artist['title'],
+                 'photoUrl' => '/api-worldskill/api/v1/media/' . $params['data'],
+                 'singlePageUrl' =>'/api-worldskill/api/v1/artists/' . $artist['id'],
+             ];
+         
+        }
+        $results = [];
 
         if (!empty($validacao)) {
-            $last_item = end($validacao);
-            $last_item['credit'] = [$credit];
+            $last_item = end($movieEnpooint);
+            $last_item['credit'] = $artists;
 
             $results = $data[key($validacao)] = $last_item;
-            return $results;
         }
-        
-
-        return $this->erro_messenge('Invalid movie id');
-
-
+        return $results;
 
     }
-    // public function get_movie_inter($params){
-    //     $db = new database;
-    //     $auth = new Auth;
-
-    //     $exist = $auth->valid_token($params['token']);
-
-    //     if($exist == false ){
-    //         http_response_code(403);
-    //         return $this->erro_messenge('Invalid token');
-    //     }
-    //     $insert = [
-    //         ':id' => $params['data']
-    //     ];
-
-    //     $validacao = $db->QUERY('SELECT * FROM movie WHERE id = :id', $insert);
-
-    //     if(empty($validacao)){
-    //         http_response_code(404);
-    //         return $this->erro_messenge('Invalid movie id');
-    //     }
-   
-
-    //     if (!empty($validacao)) {
-        
-    //         return $validacao;
-    //     }
-        
-
-    //     return $this->erro_messenge('Invalid movie id');
-
-
-
-    // }
     public function get_any_artist($params){
         $db = new database;
         $auth = new Auth;
 
-        $consulta = $db->QUERY('SELECT * FROM artist');
+        // $consulta = $db->QUERY('SELECT * FROM artist');
         $exist = $auth->valid_token($params['token']);
 
         if($exist == false ){
+            $insert = [
+                ':token' => $params['token']
+            ];
             http_response_code(403);
+             $db->QUERY('DELETE FROM accesstoken WHERE tokenString = :token', $insert);
             return $this->erro_messenge('Invalid token');
         }
 
@@ -330,8 +351,21 @@ class Controllers{
         $offset = ($page - 1) * $pagesize;
 
         $results = $db->QUERY("SELECT  id, name, photoUrl FROM artist ORDER BY  id $sortDir LIMIT $pagesize OFFSET $offset");
+        $artists = [];
+        if(!empty($results)){
+            foreach($results as $artist){
 
-        return $results;
+                $artists[] =[
+                    'id' =>$artist['id'],
+                    'name' =>$artist['name'],
+                    'photoUrl' => '/api-worldskill/api/v1/media/' . $artist['photoUrl'],
+                    'singlePageUrl' => '/api-worldskill/api/v1/artists/' . $artist['id'],
+                ];
+
+            }
+        }
+
+        return $artists;
     }
     public function get_artist($params){
         $db = new database;
@@ -344,7 +378,11 @@ class Controllers{
         $exist = $auth->valid_token($params['token']);
 
         if($exist == false ){
+            $insert = [
+                ':token' => $params['token']
+            ];
             http_response_code(403);
+             $db->QUERY('DELETE FROM accesstoken WHERE tokenString = :token', $insert);
             return $this->erro_messenge('Invalid token');
         }
 
@@ -353,6 +391,20 @@ class Controllers{
         if(empty($consulta)){
             http_response_code(404);
             return $this->erro_messenge('Invalid artist id');
+        }
+        $artists = [];
+        if(!empty($consulta)){
+            foreach($consulta as $artist){
+ 
+                $artists[] = [
+                    'name' =>$artist['name'],
+                    'birthday' =>$artist['birthday'],
+                    'biography' =>$artist['biography'],
+                    'photoUrl' => '/api-worldskill/api/v1/media/' . $artist['photoUrl'],
+                ];
+            
+           }
+
         }
 
         $query = $db->QUERY(
@@ -363,22 +415,30 @@ class Controllers{
              movie ON credit.movieId = movie.Id
              WHERE credit.artistId = :id
             ', $insert);
-
-        $id = $query[0]['id'];
-            if(!empty($query)){
-
-                $final = end($query);
-                $final['singlePageUrl'] = "/api-worldskill/api/v1/movies/$id";
-                $newQuery = $final;
+        
+        $movie = [];    
+        if(!empty($query)){
+            foreach($query as $movies){
+                $movie[] = [
+                    'id' =>$movies['id'],
+                    'title' =>$movies['title'],
+                    'duration' =>$movies['durationMinutes'],
+                    'releaseDate' =>$movies['releaseDate'],
+                    'posterUrl' => '/api-worldskill/api/v1/media/' . $movies['posterUrl'],
+                    'singlePageUrl' => '/api-worldskill/api/v1/movies/' . $movies['id'],
+                ];
             }
+        }
+        // return $movie;
+        $results = [];
+        if (!empty($consulta)) {
+            $last_item = end($artists);
+            $last_item['movie'] = $movie;
 
-         if(!empty($consulta)){
-            $movie = end($consulta);
-            $movie['movies'] = [$newQuery];
+            $results = $data[key($consulta)] = $last_item;
+        }
+        return $results;
 
-            $results = $data[key($consulta)] = $movie;
-            return $results;
-         }
 
 
     }
@@ -390,7 +450,11 @@ class Controllers{
         $exist = $auth->valid_token($params['token']);
 
         if($exist == false ){
+            $insert = [
+                ':token' => $params['token']
+            ];
             http_response_code(403);
+             $db->QUERY('DELETE FROM accesstoken WHERE tokenString = :token', $insert);
             return $this->erro_messenge('Invalid token');
         }
         $page = $params['data']['page'];
@@ -425,7 +489,11 @@ class Controllers{
         $exist = $auth->valid_token($params['token']);
 
         if($exist == false ){
+            $insert = [
+                ':token' => $params['token']
+            ];
             http_response_code(403);
+             $db->QUERY('DELETE FROM accesstoken WHERE tokenString = :token', $insert);
             return $this->erro_messenge('Invalid token');
         }
 
@@ -470,7 +538,7 @@ class Controllers{
                 if(isset($reviewMap[$avaliacao['movieId']])){
                     $avaliacao['myEvalution'] = $reviewMap[$avaliacao['movieId']]['positive'];
                 }else{
-                    $avaliacao['myEvalution'] = 0;
+                    $avaliacao['myEvalution'] = 'null';
                 }
                 $newconsulta[] = $avaliacao;
             }
@@ -482,59 +550,54 @@ class Controllers{
         $db = new database();
         $auth = new Auth;
 
-        $clear = explode('.', $data['data']);
-        $id = $clear[0];
-        $ext = '.' . $clear[1];
-
+        $id = $data['data'];
 
         $exist = $auth->valid_token($data['token']);
 
         if($exist == false ){
+            $insert = [
+                ':token' => $data['token']
+            ];
             http_response_code(403);
+             $db->QUERY('DELETE FROM accesstoken WHERE tokenString = :token', $insert);
             return $this->erro_messenge('Invalid token');
         }
 
-        if($ext !== '.jpg' && $ext !== '.mp4'){
-            http_response_code(404);
-            return $this->erro_messenge("Could not find any file with the id $id");
 
-        }
-        $result = $db->query("
-        SELECT 'photoUrl' AS type, photoUrl AS url FROM artist WHERE photoUrl = $id
-        UNION
-        SELECT 'posterUrl' AS type, posterUrl AS url FROM movie WHERE posterUrl = $id
-        UNION
-        SELECT 'trailerUrl' AS type, trailerUrl AS url FROM movie WHERE trailerUrl = $id
+        $exist = $db->QUERY("
+        SELECT 'posterUrl' AS type FROM movie WHERE posterUrl = $id 
+        UNION ALL
+        SELECT 'trailerUrl' AS type FROM movie WHERE trailerUrl = $id
+        UNION ALL
+        SELECT 'photoUrl' AS type FROM artist WHERE photoUrl = $id
         ");
-        if (empty($result)) {
+        
+        if(empty($exist)){
             http_response_code(404);
             return $this->erro_messenge("Could not find any file with the id $id");
+            
         }
-
-        if($result[0]['type'] === 'trailerUrl' && $ext !== '.mp4'){
-            return $this->erro_messenge("Cosddshe id $id");
-        }
-        if($result[0]['type'] === 'posterUrl' && $ext !== '.jpg'){
-            return $this->erro_messenge("Cosddshe id $id");
-        }
-        if($result[0]['type'] === 'photoUrl' && $ext !== '.jpg'){
-            return $this->erro_messenge("Cosddshe id $id");
-        }
-
-        $fileName = $result[0]['url'];
         $baseDir = dirname(__FILE__) . "\\media\\"; 
-        $filePath = $baseDir . $fileName . $ext;
 
-        if (!file_exists($filePath)) {
-            http_response_code(404);
-            return $this->erro_messenge("Could not find any file with the id $id");
-        }
-    
-        $fileContent = file_get_contents($filePath);
-    
-        $base64Content = base64_encode($fileContent);
-    
-        return $this->content($base64Content);
+        switch ($exist[0]['type']) {
+            case 'trailerUrl':
+                $filePath = $baseDir . $id . '.mp4';
+                break;
+                default:
+                $filePath = $baseDir . $id . '.jpg';
+                break;
+            }
+            
+            if (!file_exists($filePath)) {
+                http_response_code(404);
+                return $this->erro_messenge("Could not find any file with the id $id");
+            }
+            
+            $fileContent = file_get_contents($filePath);
+            
+            $base64Content = base64_encode($fileContent);
+            
+            return $this->content($base64Content);
     }
     public function create_reviews($params){
         $auth = new Auth;
@@ -568,9 +631,14 @@ class Controllers{
         $exist = $auth->valid_token($token);
 
         if($exist == false ){
+            $insert = [
+                ':token' => $token
+            ];
             http_response_code(403);
+             $db->QUERY('DELETE FROM accesstoken WHERE tokenString = :token', $insert);
             return $this->erro_messenge('Invalid token');
         }
+
         $emailUser = [':email'=> $exist->email];
         
         $userId = $db->QUERY("SELECT id FROM user WHERE email = :email", $emailUser)[0]['id'];
@@ -608,7 +676,11 @@ class Controllers{
         
 
         if($exist == false ){
+            $insert = [
+                ':token' => $params['token']
+            ];
             http_response_code(403);
+            $db->QUERY('DELETE FROM accesstoken WHERE tokenString = :token', $insert);
             return $this->erro_messenge('Invalid token');
         }
 
@@ -642,8 +714,12 @@ class Controllers{
         $exist = $auth->valid_token($params['token']);
         
 
-        if($exist == false ){
+       if($exist == false ){
+            $insert = [
+                ':token' => $params['token']
+            ];
             http_response_code(403);
+             $db->QUERY('DELETE FROM accesstoken WHERE tokenString = :token', $insert);
             return $this->erro_messenge('Invalid token');
         }
 
