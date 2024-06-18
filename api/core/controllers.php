@@ -172,13 +172,20 @@ class Controllers{
     }
     public function get_any_movie($params){
         $db = new database;
+        $auth = new Auth;
 
         $validacao = $db->QUERY('SELECT * FROM movie');
+        $exist = $auth->valid_token($params['token']);
 
-        $page = $params['page'];
-        $pagesize = $params['pageSize'];
-        $sortdir = $params['sortDir'];
-        $sortby = $params['sortBy'];
+        if($exist == false ){
+            http_response_code(403);
+            return $this->erro_messenge('Invalid token');
+        }
+
+        $page = $params['data']['page'];
+        $pagesize = $params['data']['pageSize'];
+        $sortdir = $params['data']['sortDir'];
+        $sortby = $params['data']['sortBy'];
         
         if($page < 1 || $page > count($validacao)){
             $page = 1;
@@ -204,10 +211,17 @@ class Controllers{
     }
     public function get_movie($params){
         $db = new database;
-        $insert = [
-            ':id' => $params
-        ];
+        $auth = new Auth;
 
+        $insert = [
+            ':id' => $params['data']
+        ];
+        $exist = $auth->valid_token($params['token']);
+
+        if($exist == false ){
+            http_response_code(403);
+            return $this->erro_messenge('Invalid token');
+        }
         $validacao = $db->QUERY('SELECT * FROM movie WHERE id = :id', $insert);
 
         if(empty($validacao)){
@@ -242,39 +256,55 @@ class Controllers{
 
 
     }
-    public function get_movie_inter($params){
-        $db = new database;
-        $insert = [
-            ':id' => $params
-        ];
+    // public function get_movie_inter($params){
+    //     $db = new database;
+    //     $auth = new Auth;
 
-        $validacao = $db->QUERY('SELECT * FROM movie WHERE id = :id', $insert);
+    //     $exist = $auth->valid_token($params['token']);
 
-        if(empty($validacao)){
-            http_response_code(404);
-            return $this->erro_messenge('Invalid movie id');
-        }
+    //     if($exist == false ){
+    //         http_response_code(403);
+    //         return $this->erro_messenge('Invalid token');
+    //     }
+    //     $insert = [
+    //         ':id' => $params['data']
+    //     ];
+
+    //     $validacao = $db->QUERY('SELECT * FROM movie WHERE id = :id', $insert);
+
+    //     if(empty($validacao)){
+    //         http_response_code(404);
+    //         return $this->erro_messenge('Invalid movie id');
+    //     }
    
 
-        if (!empty($validacao)) {
+    //     if (!empty($validacao)) {
         
-            return $validacao;
-        }
+    //         return $validacao;
+    //     }
         
 
-        return $this->erro_messenge('Invalid movie id');
+    //     return $this->erro_messenge('Invalid movie id');
 
 
 
-    }
+    // }
     public function get_any_artist($params){
         $db = new database;
+        $auth = new Auth;
 
         $consulta = $db->QUERY('SELECT * FROM artist');
+        $exist = $auth->valid_token($params['token']);
 
-        $page = $params['page'];
-        $pagesize = $params['pageSize'];
-        $sortDir = $params['sortDir'];
+        if($exist == false ){
+            http_response_code(403);
+            return $this->erro_messenge('Invalid token');
+        }
+
+
+        $page = $params['data']['page'];
+        $pagesize = $params['data']['pageSize'];
+        $sortDir = $params['data']['sortDir'];
 
         if($page < 1){
             $page = 1;
@@ -294,10 +324,18 @@ class Controllers{
     }
     public function get_artist($params){
         $db = new database;
+        $auth = new Auth;
 
         $insert = [
-            ':id' => $params
+            ':id' => $params['data']
         ];
+
+        $exist = $auth->valid_token($params['token']);
+
+        if($exist == false ){
+            http_response_code(403);
+            return $this->erro_messenge('Invalid token');
+        }
 
         $consulta = $db->QUERY('SELECT * FROM artist WHERE id = :id', $insert);
 
@@ -335,12 +373,18 @@ class Controllers{
     }
     public function get_any_genres($params){
         $db = new database;
-
+        $auth = new Auth;
         $consulta = $db->QUERY('SELECT * FROM genre');
 
-        $page = $params['page'];
-        $pagesize = $params['pageSize'];
-        $sortDir = $params['sortDir'];
+        $exist = $auth->valid_token($params['token']);
+
+        if($exist == false ){
+            http_response_code(403);
+            return $this->erro_messenge('Invalid token');
+        }
+        $page = $params['data']['page'];
+        $pagesize = $params['data']['pageSize'];
+        $sortDir = $params['data']['sortDir'];
 
         if($page < 1){
             $page = 1;
@@ -359,13 +403,20 @@ class Controllers{
     }
     public function get_any_reviews($params){
         $db = new database;
+        $auth = new Auth;
 
-        $id = $params['id'];
-        $page = $params['page'];
-        $pagesize = $params['pageSize'];
-        $pagedir = $params['sortDir'];
-        $sortby = $params['sortBy'];
+        $id = $params['data']['id'];
+        $page = $params['data']['page'];
+        $pagesize = $params['data']['pageSize'];
+        $pagedir = $params['data']['sortDir'];
+        $sortby = $params['data']['sortBy'];
+        
+        $exist = $auth->valid_token($params['token']);
 
+        if($exist == false ){
+            http_response_code(403);
+            return $this->erro_messenge('Invalid token');
+        }
 
 
         if($page < 1){
@@ -416,11 +467,21 @@ class Controllers{
         }
 
     }
-    function getMediaContent($id) {
+    function getMediaContent($data) {
         $db = new database();
-        $clear = explode('.', $id);
+        $auth = new Auth;
+
+        $clear = explode('.', $data['data']);
         $id = $clear[0];
         $ext = '.' . $clear[1];
+
+
+        $exist = $auth->valid_token($data['token']);
+
+        if($exist == false ){
+            http_response_code(403);
+            return $this->erro_messenge('Invalid token');
+        }
 
         if($ext !== '.jpg' && $ext !== '.mp4'){
             http_response_code(404);
@@ -478,7 +539,7 @@ class Controllers{
         $star = isset($params['data']['stars']) ? $params['data']['stars'] : null;
         $movieId = isset($params['data']['movieId']) ? $params['data']['movieId'] : null;
         $content = isset($params['data']['content']) ? $params['data']['content'] : null;
-        // return $movieId;
+
         $erro = [
             'propriedade' => ['erro'],
             'propriedades' => ['erro']
@@ -494,7 +555,6 @@ class Controllers{
         }
 
         $exist = $auth->valid_token($token);
-        // return $exist;
 
         if($exist == false ){
             http_response_code(403);
@@ -503,7 +563,6 @@ class Controllers{
         $emailUser = [':email'=> $exist->email];
         
         $userId = $db->QUERY("SELECT id FROM user WHERE email = :email", $emailUser)[0]['id'];
-        // return $userId;
 
         $reviewExist = $db->QUERY("SELECT * FROM review where $movieId = movieId AND userId = $userId");
 
