@@ -112,17 +112,28 @@ class Controllers{
         ];
         
         $validacao = $db->QUERY('SELECT * FROM user WHERE  email = :email', $Insert);
-        
-        if(empty($validacao)){
+
+         if(empty($validacao)){
             http_response_code(422);
             return $this->erro_response($erro);    ;
         }
-        if(!$validacao){
-            http_response_code(422);
-            return $this->erro_response($erro);      
-        }elseif(!password_verify($params['password'], $validacao[0]['password'])){
-            http_response_code(422);
-            return $this->erro_messenge('Invalid email or password');
+
+        $user = $validacao[0];
+
+        if(!password_verify($params['password'], $user['password'])){
+            
+            if($params['password'] == $user['password']){
+                $cripPass = password_hash($params['password'], PASSWORD_DEFAULT);
+                $update = [
+                    ':id' => $user['id'],
+                    ':password' => $cripPass
+                ];
+                $db-> QUERY("
+                    UPDATE  user SET password = :password WHERE id = :id", $update);
+            }else{
+                http_response_code(422);
+                return $this->erro_messenge('Invalid email or password');
+            }
         }
         
         $consulta = [
@@ -592,7 +603,7 @@ class Controllers{
         $auth = new Auth;
         $db = new database;
         $idreview = $params['data']['reviewId'];
-        // return $params;
+
         $exist = $auth->valid_token($params['token']);
         
 
@@ -612,16 +623,51 @@ class Controllers{
         $userId = $db->QUERY("SELECT id FROM user WHERE email = :email", $emailUser)[0]['id'];
         
         $reviewuser = $db->QUERY("SELECT * FROM reviewevaluation WHERE reviewId = $idreview AND userId = $userId ");
+
         if(empty($reviewuser)){
             http_response_code(404);
-        return $this->erro_messenge('You haven`t published a evaluation to this review');
+            return $this->erro_messenge('You haven`t published a evaluation to this review');
+        }elseif(!empty($reviewuser)){
+            $db->QUERY("DELETE FROM reviewevaluation WHERE reviewId = $idreview AND userId = $userId");
+            http_response_code(204);
+            return ;
+        }
+       
+    }
+    public function delete_reviews_movie($params){
+        $auth = new Auth;
+        $db = new database;
+        $idmovie = $params['data']['movieId'];
+
+        $exist = $auth->valid_token($params['token']);
+        
+
+        if($exist == false ){
+            http_response_code(403);
+            return $this->erro_messenge('Invalid token');
         }
 
-       $delete =  $db->QUERY("DELETE FROM reviewevaluation WHERE reviewId = $idreview AND userId = $userId");
-        if($delete){
-            http_response_code(204);
-            return;
+        $idExisted = $db->QUERY("SELECT * FROM review WHERE movieId = $idmovie ");
+
+        if(empty($idExisted)){
+            http_response_code(400);
+            return $this->erro_messenge('Invalid movie id');
         }
+        $emailUser = [':email'=> $exist->email];
+        
+        $userId = $db->QUERY("SELECT id FROM user WHERE email = :email", $emailUser)[0]['id'];
+        
+        $reviewuser = $db->QUERY("SELECT * FROM review WHERE movieId = $idmovie AND userId = $userId ");
+
+        if(empty($reviewuser)){
+            http_response_code(404);
+            return $this->erro_messenge('You haven`t published a evaluation to this movie');
+        }elseif(!empty($reviewuser)){
+            $db->QUERY("DELETE FROM review WHERE movieId = $idmovie AND userId = $userId");
+            http_response_code(204);
+            return ;
+        }
+
     }
 
 }
