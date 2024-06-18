@@ -66,7 +66,7 @@ class Router
             
             $clear = explode("?", $path);
             $newpath = $clear[0];
-
+        
             foreach ($this->routes as $route) {
                 if ($route['method'] === $method && $route['path'] === $newpath) {
                     header('Content-Type: application/json');
