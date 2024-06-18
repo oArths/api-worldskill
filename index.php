@@ -224,6 +224,29 @@ $router->add('POST', $url . '/api/v1/reviews/', function() use ($control){
     echo json_encode($response);
 
 });
+$router->add('DELETE', $url . '/api/v1/reviews/evaluations', function() use ($control){
+    $id = $_GET;
+    $header = getallheaders();
+   
+
+    if(!isset($header['Authorization']) || empty($header['Authorization'])){
+        http_response_code(401);
+        echo json_encode($control->erro_messenge('Unauthenticated user'));
+        return ;
+    }else{
+        $token = explode(" ", $header['Authorization'])[1];
+    }
+
+    $data = [
+        'data'=> $id,
+        'token' => $token    
+    ];
+
+    $response = $control->delete_reviews($data);
+
+    echo json_encode($response);
+
+});
 
 $router->run();
 
